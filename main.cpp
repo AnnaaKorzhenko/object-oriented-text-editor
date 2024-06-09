@@ -14,6 +14,7 @@ public:
     void loadFromFile();
     void printText();
     void insertAtIndex();
+    void deleteText();
 
 private:
     char* buffer;
@@ -69,6 +70,7 @@ void TextContainer::clearBuffer() {
 void TextContainer::addText() {
     char c;
     std::cout << "Enter text you want to append. When done, press '/'" << std::endl;
+    c = getchar();
     while ((c = getchar()) != '/') {
         checkCapacity(1);
         buffer[currentSize++] = c;
@@ -129,6 +131,47 @@ void TextContainer::printText() {
     std::cout << buffer << std::endl;
 }
 
+void TextContainer::deleteText() {
+    int line, index, numberOfChars, lineCount = 0;
+    std::cout << "Enter the number of the line you want to delete from (starting with 0):" << std::endl;
+    std::cin >> line;
+    std::cout << "Enter the index you want to start deletion from (starting with 0):" << std::endl;
+    std::cin >> index;
+    std::cout << "Enter the number of characters to delete:" << std::endl;
+    std::cin >> numberOfChars;
+
+    int i = 0;
+    for (i; i < currentSize; i++) {
+        if (lineCount == line) {
+            break;
+        }
+        if (buffer[i] == '\n') {
+            lineCount++;
+        }
+    }
+    if (lineCount != line) {
+        std::cerr << "Such a line does not exist" << std::endl;
+        return;
+    }
+
+    int generalIndex = i + index;
+    if (generalIndex > currentSize) {
+        std::cerr << "This index does not exist" << std::endl;
+        return;
+    }
+
+    int j = generalIndex;
+    for (int k = 0; k < numberOfChars && buffer[j] != '\0'; k++) {
+        j++;
+    }
+
+    std::memmove(buffer + generalIndex, buffer + j, currentSize - j);
+    currentSize -= j - generalIndex;
+    buffer[currentSize] = '\0';
+    std::cout << "Characters deleted!" << std::endl;
+}
+
+
 void TextContainer::insertAtIndex() {
     TextContainer substring;
     substring.addText();
@@ -175,6 +218,7 @@ int getCommand() {
     std::cout << "Enter 4 to load text from file" << std::endl;
     std::cout << "Enter 5 to print text to the console" << std::endl;
     std::cout << "Enter 6 to insert symbols at the specific line and index" << std::endl;
+    std::cout << "Enter 7 to delete exact number of characters at the specific line and index" << std::endl;
     std::cout << "Enter 8 to clear the console" << std::endl;
     std::cout << "Enter 0 to exit" << std::endl;
     std::cout << ">>>";
@@ -212,6 +256,10 @@ int main() {
             }
             case 6: {
                 textStorage.insertAtIndex();
+                break;
+            }
+            case 7: {
+                textStorage.deleteText();
                 break;
             }
             case 0: {

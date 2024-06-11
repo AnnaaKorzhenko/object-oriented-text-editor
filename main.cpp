@@ -18,6 +18,7 @@ public:
     TextContainer* cut();
     TextContainer* copy();
     void paste(TextContainer*);
+    void insertWithReplace(TextContainer*);
 
 private:
     char* buffer;
@@ -315,7 +316,7 @@ TextContainer* TextContainer::copy() {
 }
 
 void TextContainer::paste(TextContainer* clipboard) {
-    int line, index, numberOfChars, lineCount = 0;
+    int line, numberOfChars, index, lineCount = 0;
     std::cout << "Enter the number of the line you want to paste to (starting with 0):" << std::endl;
     std::cin >> line;
     std::cout << "Enter the index you want to start pasting to (starting with 0):" << std::endl;
@@ -342,7 +343,7 @@ void TextContainer::paste(TextContainer* clipboard) {
     }
 
     int j = generalIndex;
-    for (int k = 0; k < numberOfChars && buffer[j] != '\0'; k++) {
+    for (int k = 0; buffer[j] != '\0'; k++) {
         j++;
     }
 
@@ -352,6 +353,52 @@ void TextContainer::paste(TextContainer* clipboard) {
     currentSize += clipboard->currentSize;
     buffer[currentSize] = '\0';
     std::cout << "Text pasted from clipboard!" << std::endl;
+}
+
+void TextContainer::insertWithReplace(TextContainer* clipboard) {
+    int line, index, numberOfChars, lineCount = 0;
+    std::cout << "Enter the number of the line you want to replace at (starting with 0):" << std::endl;
+    std::cin >> line;
+    std::cout << "Enter the index you want to start reaplacing at (starting with 0):" << std::endl;
+    std::cin >> index;
+    numberOfChars = clipboard->currentSize;
+
+    int i = 0;
+    for (i; i < currentSize; i++) {
+        if (lineCount == line) {
+            break;
+        }
+        if (buffer[i] == '\n') {
+            lineCount++;
+        }
+    }
+    if (lineCount != line) {
+        std::cerr << "Such a line does not exist" << std::endl;
+        exit(-1);
+    }
+
+    int generalIndex = i + index;
+    if (generalIndex > currentSize) {
+        std::cerr << "This index does not exist" << std::endl;
+        return;
+    }
+
+    int j = generalIndex;
+    for (int k = 0; k < numberOfChars && buffer[j] != '\0'; k++) {
+        j++;
+    }
+
+    int replacedChars = j - generalIndex;
+    int additionalSpaceNeeded = clipboard->currentSize - replacedChars;
+    checkCapacity(additionalSpaceNeeded);
+
+    std::memmove(buffer + generalIndex + clipboard->currentSize, buffer + j, currentSize - j);
+    std::memcpy(buffer + generalIndex, clipboard->buffer, clipboard->currentSize);
+
+    currentSize += clipboard->currentSize - replacedChars;
+    buffer[currentSize] = '\0';
+
+    std::cout << "Text replaced with clipboard content!" << std::endl;
 }
 
 int getCommand() {
@@ -366,6 +413,7 @@ int getCommand() {
     std::cout << "Enter 8 to cut to the clipboard" << std::endl;
     std::cout << "Enter 9 to copy to the clipboard" << std::endl;
     std::cout << "Enter 10 to paste from the clipboard" << std::endl;
+    std::cout << "Enter 11 to insert with replacement from the clipboard" << std::endl;
     std::cout << "Enter 0 to exit" << std::endl;
     std::cout << ">>>";
     std::cin >> command;
@@ -427,6 +475,9 @@ int main() {
             }
             case 10: {
                 textStorage.paste(clipboard);
+            }
+            case 11: {
+                textStorage.insertWithReplace(clipboard);
             }
             case 0: {
                 std::cout << "Exit! Have a good day!" << std::endl;

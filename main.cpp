@@ -270,6 +270,50 @@ TextContainer* TextContainer::cut() {
     return clipboard;
 }
 
+TextContainer* TextContainer::copy() {
+    int line, index, numberOfChars, lineCount = 0;
+    std::cout << "Enter the number of the line you want to copy from (starting with 0):" << std::endl;
+    std::cin >> line;
+    std::cout << "Enter the index you want to start copying from (starting with 0):" << std::endl;
+    std::cin >> index;
+    std::cout << "Enter the number of characters to copy:" << std::endl;
+    std::cin >> numberOfChars;
+
+    int i = 0;
+    for (i; i < currentSize; i++) {
+        if (lineCount == line) {
+            break;
+        }
+        if (buffer[i] == '\n') {
+            lineCount++;
+        }
+    }
+    if (lineCount != line) {
+        std::cerr << "Such a line does not exist" << std::endl;
+        exit(-1);
+    }
+
+    int generalIndex = i + index;
+    if (generalIndex > currentSize) {
+        std::cerr << "This index does not exist" << std::endl;
+        exit(-1);
+    }
+
+    int j = generalIndex;
+    for (int k = 0; k < numberOfChars && buffer[j] != '\0'; k++) {
+        j++;
+    }
+
+    TextContainer* clipboard = new TextContainer();
+    clipboard->checkCapacity(j - generalIndex);
+    std::memcpy(clipboard->buffer, buffer + generalIndex, j - generalIndex);
+    clipboard->currentSize = j - generalIndex;
+    clipboard->buffer[clipboard->currentSize] = '\0';
+    std::cout << "Text copied to clipboard!" << std::endl;
+
+    return clipboard;
+}
+
 int getCommand() {
     int command;
     std::cout << "Enter 1 to append text to the end" << std::endl;
@@ -280,6 +324,7 @@ int getCommand() {
     std::cout << "Enter 6 to insert symbols at the specific line and index" << std::endl;
     std::cout << "Enter 7 to delete exact number of characters at the specific line and index" << std::endl;
     std::cout << "Enter 8 to cut to the clipboard" << std::endl;
+    std::cout << "Enter 9 to copy to the clipboard" << std::endl;
     std::cout << "Enter 0 to exit" << std::endl;
     std::cout << ">>>";
     std::cin >> command;
@@ -335,6 +380,9 @@ int main() {
             case 8: {
                 clipboard = textStorage.cut();
                 break;
+            }
+            case 9: {
+                clipboard = textStorage.copy();
             }
             case 0: {
                 std::cout << "Exit! Have a good day!" << std::endl;

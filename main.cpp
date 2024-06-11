@@ -7,7 +7,7 @@ class TextContainer {
 public:
     TextContainer();
     ~TextContainer();
-    void addText();
+    void getText();
     void appendText(TextContainer* textToAppend);
     void startNewLine();
     void saveToFile();
@@ -15,14 +15,26 @@ public:
     void printText();
     void insertAtIndex();
     void deleteText();
+    TextContainer* cut();
+    TextContainer* copy();
+    void paste(TextContainer*);
 
 private:
     char* buffer;
     int currentSize;
     int capacity;
+    char* clipboard;
+    int clipboardSize;
     void reallocate();
     void checkCapacity(int additionalSize);
     void clearBuffer();
+};
+
+class stateContainer {
+public:
+    void hi();
+private:
+    void bye();
 };
 
 TextContainer::TextContainer() : currentSize(0), capacity(100) {
@@ -67,7 +79,7 @@ void TextContainer::clearBuffer() {
     buffer[0] = '\0';
 }
 
-void TextContainer::addText() {
+void TextContainer::getText() {
     char c;
     std::cout << "Enter text you want to append. When done, press '/'" << std::endl;
     c = getchar();
@@ -174,7 +186,7 @@ void TextContainer::deleteText() {
 
 void TextContainer::insertAtIndex() {
     TextContainer substring;
-    substring.addText();
+    substring.getText();
     int line, index, lineCount = 0;
     std::cout << "Enter the number of the line you want to insert at (starting with 0):" << std::endl;
     std::cin >> line;
@@ -210,6 +222,54 @@ void TextContainer::insertAtIndex() {
     std::cout << "Text inserted!" << std::endl;
 }
 
+TextContainer* TextContainer::cut() {
+    int line, index, numberOfChars, lineCount = 0;
+    std::cout << "Enter the number of the line you want to cut from (starting with 0):" << std::endl;
+    std::cin >> line;
+    std::cout << "Enter the index you want to start cutting from (starting with 0):" << std::endl;
+    std::cin >> index;
+    std::cout << "Enter the number of characters to cut:" << std::endl;
+    std::cin >> numberOfChars;
+
+    int i = 0;
+    for (i; i < currentSize; i++) {
+        if (lineCount == line) {
+            break;
+        }
+        if (buffer[i] == '\n') {
+            lineCount++;
+        }
+    }
+    if (lineCount != line) {
+        std::cerr << "Such a line does not exist" << std::endl;
+        exit(-1);
+    }
+
+    int generalIndex = i + index;
+    if (generalIndex > currentSize) {
+        std::cerr << "This index does not exist" << std::endl;
+        exit(-1);
+    }
+
+    int j = generalIndex;
+    for (int k = 0; k < numberOfChars && buffer[j] != '\0'; k++) {
+        j++;
+    }
+
+    TextContainer* clipboard = new TextContainer();
+    clipboard->checkCapacity(j - generalIndex);
+    std::memcpy(clipboard->buffer, buffer + generalIndex, j - generalIndex);
+    clipboard->currentSize = j - generalIndex;
+    clipboard->buffer[clipboard->currentSize] = '\0';
+
+    std::memmove(buffer + generalIndex, buffer + j, currentSize - j);
+    currentSize -= j - generalIndex;
+    buffer[currentSize] = '\0';
+    std::cout << "Text cut to clipboard!" << std::endl;
+
+    return clipboard;
+}
+
 int getCommand() {
     int command;
     std::cout << "Enter 1 to append text to the end" << std::endl;
@@ -219,7 +279,7 @@ int getCommand() {
     std::cout << "Enter 5 to print text to the console" << std::endl;
     std::cout << "Enter 6 to insert symbols at the specific line and index" << std::endl;
     std::cout << "Enter 7 to delete exact number of characters at the specific line and index" << std::endl;
-    std::cout << "Enter 8 to clear the console" << std::endl;
+    std::cout << "Enter 8 to cut to the clipboard" << std::endl;
     std::cout << "Enter 0 to exit" << std::endl;
     std::cout << ">>>";
     std::cin >> command;
@@ -229,12 +289,13 @@ int getCommand() {
 int main() {
     int command;
     TextContainer textStorage;
+    TextContainer* clipboard;
     do {
         command = getCommand();
         switch (command) {
             case 1: {
                 TextContainer textToAppend;
-                textToAppend.addText();
+                textToAppend.getText();
                 textStorage.appendText(&textToAppend);
                 break;
             }
@@ -251,8 +312,17 @@ int main() {
                 break;
             }
             case 5: {
-                textStorage.printText();
-                break;
+                char choice;
+                std::cout <<"Whta do you want to print? Enter t for main text ad c for clipboard" << std::endl;
+                std::cin >> choice;
+                if (choice == 't') {
+                    textStorage.printText();
+                    break;
+                }
+                if (choice == 'c') {
+                    clipboard->printText();
+                    break;
+                }
             }
             case 6: {
                 textStorage.insertAtIndex();
@@ -260,6 +330,10 @@ int main() {
             }
             case 7: {
                 textStorage.deleteText();
+                break;
+            }
+            case 8: {
+                clipboard = textStorage.cut();
                 break;
             }
             case 0: {
